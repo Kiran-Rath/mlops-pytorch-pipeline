@@ -1,0 +1,35 @@
+# Stage 1: Base with dependencies
+FROM python:3.11-slim AS base
+
+# Install system dependencies if required
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy training requirements and install
+COPY requirements/train.txt .
+RUN pip install --no-cache-dir -r train.txt
+
+# Stage 2: Training runtime
+FROM python:3.11-slim AS training
+
+WORKDIR /app
+
+# Copy installed python packages from base
+COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=base /usr/local/bin /usr/local/bin
+
+# Create directories for data, checkpoints, and configs
+RUN mkdir -p /app/data /app/checkpoints /app/configs
+
+# Copy application source and default configuration
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+# Configure Python environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+ENTRYPOINT ["python", "src/train.py"]
