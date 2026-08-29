@@ -1,3 +1,4 @@
+from __future__ import annotations
 import io
 import os
 from pathlib import Path
@@ -11,11 +12,17 @@ from PIL import Image
 from torchvision import transforms
 
 try:
-    from dataset import CIFAR10_CLASSES, get_transforms
-    from model import get_model, load_model_from_checkpoint
-except ImportError:
     from src.dataset import CIFAR10_CLASSES, get_transforms
     from src.model import get_model, load_model_from_checkpoint
+except ImportError:
+    try:
+        from dataset import CIFAR10_CLASSES, get_transforms
+        from model import get_model, load_model_from_checkpoint
+    except ImportError:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from dataset import CIFAR10_CLASSES, get_transforms
+        from model import get_model, load_model_from_checkpoint
 
 app = FastAPI(
     title="PyTorch CIFAR-10 Inference Service",
