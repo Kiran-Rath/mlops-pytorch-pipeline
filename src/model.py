@@ -1,6 +1,12 @@
+from __future__ import annotations
 import torch
 import torch.nn as nn
-from torchvision.models import resnet18, ResNet18_Weights
+
+try:
+    from torchvision.models import resnet18, ResNet18_Weights
+except ImportError:
+    from torchvision.models import resnet18
+    ResNet18_Weights = None
 
 
 class SimpleCNN(nn.Module):
@@ -45,8 +51,11 @@ def get_model(
     architecture_lower = architecture.lower()
 
     if architecture_lower == "resnet18":
-        weights = ResNet18_Weights.DEFAULT if pretrained else None
-        model = resnet18(weights=weights)
+        if ResNet18_Weights is not None:
+            weights = ResNet18_Weights.DEFAULT if pretrained else None
+            model = resnet18(weights=weights)
+        else:
+            model = resnet18(pretrained=pretrained)
         # Adapt final fully connected layer for CIFAR-10 classes
         model.fc = nn.Linear(model.fc.in_features, num_classes)
         return model
